@@ -1,71 +1,53 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.signal import find_peaks
+import math
 
-# Number of simulations
-n_trials = 10000
-points = 70
-"""
-# Measured values and uncertainties (replace these with your actual data)
-C1 = 6.40*pow(10,-9)  # Example value
-delta_C1 = 0  # Example uncertainty
-filename = "v_down.txt"
-data = np.genfromtxt(filename) # Example value
-v_down = data[:,0]
-delta_v_down = data[:,1]  # Example uncertainty
+def gaussian(trial, n_trials = 1000, points = 61, bins = 100000):
+    filename = "charges_second.txt"
+    data = np.genfromtxt(filename)
+    q1 = data  # Example value
 
-filename = "v_up.txt"
-data = np.genfromtxt(filename)
-v_up = data[:,0]  # Example value
-delta_v_up = data[:,1] # Example uncertainty
+    filename = "uncertainty_q_second.txt"
+    data = np.genfromtxt(filename)
+    delta_q1 = data  # Example value
+    # Create arrays to hold simulated charges
+    charges = np.zeros(n_trials*points)
 
-filename = "Volt_rise.txt"
-data = np.genfromtxt(filename)
-V_rise = data[:,0]  # Example value
-delta_V_rise = data[:,1]  # Example uncertainty
-"""
-
-filename = "charges.txt"
-data = np.genfromtxt(filename)
-q1 = data[:,0]  # Example value
-q2 = data[:,1]  # Example uncertainty
-
-filename = "uncertainty_q.txt"
-data = np.genfromtxt(filename)
-delta_q1 = data[:,0]  # Example value
-delta_q2 = data[:,1]  # Example uncertainty
-
-# Create arrays to hold simulated charges
-charges = np.zeros(n_trials*points)
-
-for j in range(0,points):
-    for i in range(n_trials):
-        # Randomly sample from normal distributions
-        """
-        sampled_C1 = np.random.normal(C1, delta_C1)
-        sampled_v_down = np.random.normal(v_down[j], delta_v_down[j])
-        sampled_v_up = np.random.normal(v_up[j], delta_v_up[j])
-        sampled_V_rise = np.random.normal(V_rise[j], delta_V_rise[j])
-        """
-        sampled1 = np.random.normal(q1[j], delta_q1[j])
-        #sampled2 = np.random.normal(q2, delta_q2)
-
-
+    for j in range(0,points):
+        for i in range(n_trials):
+            # Randomly sample from normal distributions
+            sampled1 = np.random.normal(q1[j], delta_q1[j])
+            # Store the sampled charge
+            charges[j * n_trials + i] = sampled1
         # Calculate charge for the sampled values
-        charges[j * n_trials + i] = sampled1
 
-plt.figure(figsize=(10, 6))
-plt.hist(charges, bins=100000, color="skyblue", edgecolor="black", alpha=0.7)
-plt.xlabel("Charge (C)")
-plt.ylabel("Frequency")
-plt.title("Monte Carlo Simulated Charge Distribution")
-plt.show()
+    counts, bin_edges = np.histogram(charges, bins)
+    bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2 
 
-"""
-charges = np.array(charges)
-print(charges)
-charges = np.random.normal(1e-19, 1e-20, size=10000)
-hist_counts, bin_edges = np.histogram(charges, bins=100)
+    min_prominence = 2  # Minimum prominence of peaks
 
-print("Histogram counts:", hist_counts)
-print("Bin edges:", bin_edges)
-"""
+    # Use find_peaks to locate indices of local peaks
+    peak_indices, _ = find_peaks(counts, prominence=min_prominence)
+    local_peaks = bin_centers[peak_indices]  # Get the charge values at local peaks
+    
+    min_value = 3.520e-19
+    max_value = 5.137e-17
+    local_peaks = local_peaks[(local_peaks > min_value) & (local_peaks < max_value)]
+
+    # Optionally, save the local peaks to a file for each point
+    with open("local_peaks_two_{}.txt".format(trial), "w") as f:
+        for peak in local_peaks:
+            f.write(f"{peak}\n")
+
+
+for i in range(5):
+    gaussian(i)
+
+# plt.figure(figsize=(10, 6))
+# plt.hist(charges, bins, color="skyblue", edgecolor="black", alpha=0.7)
+# plt.xlabel("Charge (C)")
+# plt.ylabel("Frequency")
+# plt.title("Monte Carlo Simulated Charge Distribution")
+# plt.show()
+

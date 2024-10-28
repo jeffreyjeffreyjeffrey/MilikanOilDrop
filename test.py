@@ -7,7 +7,6 @@ filename = "Volt_rise.txt"
 data = np.genfromtxt(filename)
 
 
-
 filename = "Volt_rise.txt"
 data = np.genfromtxt(filename) # Example value
 
